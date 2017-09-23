@@ -1,8 +1,6 @@
 import url from 'url'
 import path from 'path'
 import electron from 'electron'
-import imageToPlate from './imageToPlate.js'
-import proc from 'child_process'
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
 
