@@ -6,12 +6,12 @@ import THREE from 'three'
 import exportStl from './exportStl.js'
 import floydDither from 'floyd-steinberg'
 import getPixels from 'get-pixels'
-import sharp from 'sharp'
+import sharp from 'sharp' // do not use!
 import yaml from 'yamljs'
 
 
 const printer = yaml.load(__dirname.replace('/dist','')+'/default.yml')
-let printable = false
+
 const pixelGeo = new THREE.CubeGeometry(
   printer.line, 
   printer.line, 
@@ -37,24 +37,28 @@ function pixelBounds (bed) {
 
 
 export default function (opts, output) {
-  printable = new THREE.Geometry()
+  const geo = new THREE.Geometry()
   const fileName = path.basename(opts.file)
   const dirName = path.dirname(opts.file)
 
-  const prePix = sharp(opts.file) // check img dim and scale to fit printer
-  prePix.metadata((e, info) => {
-    const bounds = pixelBounds(printer)
-    output({log:'processing '+opts.file})
-    if (info.height>bounds.h || info.width>bounds.w) {
-      opts.file = dirName+'/sm_'+fileName
-      if (info.width>info.height) prePix.resize(bounds.w, null)
-      else prePix.resize(null, bounds.w)
-      prePix.toFile(opts.file, (err) => {
-        if (err) console.error(e)
-        processImage(opts, output)
-      })
-    } else processImage(opts, output) 
-  })
+  processImage(opts, output)
+
+  // chain together functions passing results from one to another
+
+  // const prePix = sharp(opts.file) // check img dim and scale to fit printer
+  // prePix.metadata((e, info) => {
+  //   const bounds = pixelBounds(printer)
+  //   output({log:'processing '+opts.file})
+  //   if (info.height>bounds.h || info.width>bounds.w) {
+  //     opts.file = dirName+'/sm_'+fileName
+  //     if (info.width>info.height) prePix.resize(bounds.w, null)
+  //     else prePix.resize(null, bounds.w)
+  //     prePix.toFile(opts.file, (err) => {
+  //       if (err) console.error(e)
+  //       processImage(opts, output)
+  //     })
+  //   } else processImage(opts, output) 
+  // })
 }
 
 
@@ -90,7 +94,7 @@ function processImage (opts, output) {
 }
 
 
-function pixelsToGeometry (opts, output) {
+function pixelsToGeometry (opts, output, geo) {
   // 1 unit / pixel is === to 1 mm
   // units have to equal printer line width
   const w = opts.width
@@ -102,7 +106,6 @@ function pixelsToGeometry (opts, output) {
     4 * printer.line
   )
   baseGeo.center()
-
 
   for(let y = 0; y < h; y++) { // y row
     for(let x = 0; x < w; x++) { // x across y
@@ -117,23 +120,23 @@ function pixelsToGeometry (opts, output) {
     }
   }
 
-  printable.scale(1,1,(3*printer.line)) 
-  printable.center() 
+  geo.scale(1,1,(3*printer.line)) 
+  geo.center() 
 
   const base = new THREE.Mesh(baseGeo)
   base.position.z = -(3*printer.line)
   base.updateMatrix()
 
-  printable.merge(base.geometry, base.matrix)
+  geo.merge(base.geometry, base.matrix)
 
-  const model = new THREE.Mesh(printable)
+  const model = new THREE.Mesh(geo)
   model.name = opts.stlFileName
   output({log: 'exporting STL file...'})
   exportStl(model, output)
 }
 
 
-function savePixel (x,y,sides) {
+function savePixel (x,y,sides,geo) {
   const pixel = new THREE.Mesh(pixelGeo.clone())
   let m = _.clone(map)
 
@@ -148,5 +151,5 @@ function savePixel (x,y,sides) {
   })
 
   pixel.updateMatrix()
-  printable.merge(pixel.geometry,pixel.matrix)
+  geo.merge(pixel.geometry,pixel.matrix)
 }
