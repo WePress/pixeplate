@@ -1,7 +1,7 @@
 {
   "name": "pixe(p)late",
   "productName": "pixe(p)late",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "pixe(p)late turns image pixels into 3D printable STL plates for letterpress",
   "main": "dist/main.js",
   "scripts": {
@@ -18,9 +18,7 @@
     "yamljs": "^0.2.8"
   },
   "devDependencies": {
-    "babel": "5.8.29",
     "electron": "^1.4.14",
-    "electron-packager": "^8.2.0",
-    "electron-rebuild": "^1.3.0"
+    "electron-packager": "^8.2.0"
   }
 }

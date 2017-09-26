@@ -1,54 +1,23 @@
 import path from 'path'
 import _ from 'underscore'
 import THREE from 'three'
-import exportStl from './exportStl.js'
-import floydDither from 'floyd-steinberg'
-import getPixels from 'get-pixels'
-import yaml from 'yamljs'
 
-const conf = yaml.load(__dirname.replace('/dist','')+'/default.yml')
-
-const pixelGeo = new THREE.CubeGeometry(
-  conf.printer.line, 
-  conf.printer.line, 
-  conf.printer.line
-)
-
-const map = { // front : 8,9 & back : 10,11
-  right : 0, // faces 0,1
-  left : 2, // faces 2,3
-  top : 4, // faces 4,5
-  bottom : 6 // faces 6,7
-}
-
-export default function (opts, output) {
-  // output is a callback expecting an object {log:string,pixels:pixarray}
-  const ext = path.extname(opts.file) // file extension
-  const stlPath = opts.file.replace(ext, '.stl') 
-
-  getPixels(opts.file, (e, pixels) => { 
-    const w = pixels.shape[0]
-    const h = pixels.shape[1]
-    const packagedPixels = {
-      width : w, height: h, data: pixels.data, stlFileName: stlPath
-    }
-
-    // dither image!
-    pixels.data = floydDither(pixels).data
-    packagedPixels.data = pixels.data
-
-    output({preview:pixels})
-    output({log:'|･ω･)ﾉ making 3D plate from image pixels...'})
-
-    setTimeout(() => {
-      pixelsToGeometry(packagedPixels, output) 
-    }, 80)
-  })
-}
-
-function pixelsToGeometry (opts, output, geo) {
+export default function pixelsToGeometry (opts) {
   // 1 unit / pixel is === to 1 mm
   // units have to equal printer line width
+  const conf = opts.conf
+  const pixelGeo = new THREE.CubeGeometry(
+    conf.printer.line, 
+    conf.printer.line, 
+    conf.printer.line
+  )
+
+  const map = { // front : 8,9 & back : 10,11
+    right : 0, // faces 0,1
+    left : 2, // faces 2,3
+    top : 4, // faces 4,5
+    bottom : 6 // faces 6,7
+  }
   const geo = new THREE.Geometry()
   const w = opts.width
   const h = opts.height
@@ -59,6 +28,8 @@ function pixelsToGeometry (opts, output, geo) {
   for(let y = 0; y < h; y++) { // y row
     for(let x = 0; x < w; x++) { // x across y
       const val = pixArray[((w*y)+x)*4]
+
+      // fix broken outer pixels w missing faces!
 
       const sides = { // find connected pixels : but don't flag exterior!
         right : pixArray[((w*y)+(x+1))*4],
@@ -102,10 +73,8 @@ function pixelsToGeometry (opts, output, geo) {
 
   const model = new THREE.Mesh(geo)
   model.name = opts.stlFileName
-  output({log: 'exporting STL file...'})
-  exportStl(model, output)
+  return model
 }
-
 
 function makePixel (x,y,sides,geo) {
   const pixel = new THREE.Mesh(pixelGeo.clone())
