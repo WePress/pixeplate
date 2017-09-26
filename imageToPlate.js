@@ -9,12 +9,12 @@ import getPixels from 'get-pixels'
 import yaml from 'yamljs'
 
 
-const printer = yaml.load(__dirname.replace('/dist','')+'/default.yml')
+const conf = yaml.load(__dirname.replace('/dist','')+'/default.yml')
 
 const pixelGeo = new THREE.CubeGeometry(
-  printer.line, 
-  printer.line, 
-  printer.line
+  conf.printer.line, 
+  conf.printer.line, 
+  conf.printer.line
 )
 
 const map = { // front : 8,9 & back : 10,11
@@ -92,30 +92,26 @@ function processImage (opts, output) {
   })
 }
 
-
 function pixelsToGeometry (opts, output, geo) {
   // 1 unit / pixel is === to 1 mm
   // units have to equal printer line width
   const w = opts.width
   const h = opts.height
+  const baseWidth = (w*conf.printer.line) + conf.plate.basePadding
+  const baseHeight = (h*conf.printer.line) + conf.plate.basePadding
   const pixArray = opts.data
-  const baseGeo = new THREE.CubeGeometry(
-    w * printer.line,
-    h * printer.line,
-    4 * printer.line
-  )
-  baseGeo.center()
-
+ 
   for(let y = 0; y < h; y++) { // y row
     for(let x = 0; x < w; x++) { // x across y
       const val = pixArray[((w*y)+x)*4]
 
-      const sides = { // find connected pixels : but don't flag exterior
+      const sides = { // find connected pixels : but don't flag exterior!
         right : pixArray[((w*y)+(x+1))*4],
         left : pixArray[((w*y)+(x-1))*4],
         top : pixArray[((w*(y-1))+x)*4],
         bottom : pixArray[((w*(y+1))+x)*4]
       }
+
       console.log(sides)
         
       // const sides = { // find connected pixels : but don't flag exterior
@@ -128,13 +124,23 @@ function pixelsToGeometry (opts, output, geo) {
       // if (val===0) savePixel(x,y,sides)
     }
   }
+
   return
 
-  geo.scale(1,1,(3*printer.line)) 
+  geo.scale(1,1,conf.plate.pixelHeight) 
   geo.center() 
 
+  const rs = new THREE.Shape()
+  const protoBase = 
+    roundedRect(rs,0,0,baseHeight,baseWidth,conf.plate.baseBevel)
+
+  const baseGeo = new THREE.ExtrudeGeometry(roundRectShape, {
+    amount : conf.plate.baseHeight
+  })
+
+  baseGeo.center()
   const base = new THREE.Mesh(baseGeo)
-  base.position.z = -(3*printer.line)
+  base.position.z = -conf.plate.pixelHeight
   base.updateMatrix()
 
   geo.merge(base.geometry, base.matrix)
@@ -150,8 +156,8 @@ function savePixel (x,y,sides,geo) {
   const pixel = new THREE.Mesh(pixelGeo.clone())
   let m = _.clone(map)
 
-  pixel.position.x = (x * printer.line)
-  pixel.position.y = -(y * printer.line)
+  pixel.position.x = (x * conf.printer.line)
+  pixel.position.y = -(y * conf.printer.line)
 
   _.each(sides, (v,k) => { // remove colliding side
     if (v) { 
