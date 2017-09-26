@@ -6,7 +6,6 @@ import THREE from 'three'
 import exportStl from './exportStl.js'
 import floydDither from 'floyd-steinberg'
 import getPixels from 'get-pixels'
-import sharp from 'sharp' // do not use!
 import yaml from 'yamljs'
 
 
@@ -110,15 +109,26 @@ function pixelsToGeometry (opts, output, geo) {
   for(let y = 0; y < h; y++) { // y row
     for(let x = 0; x < w; x++) { // x across y
       const val = pixArray[((w*y)+x)*4]
-      const sides = { // find connected pixels
-        right : (pixArray[((w*y)+(x+1))*4] === 0) ? true : false,
-        left : (pixArray[((w*y)+(x-1))*4] === 0) ? true : false,
-        top : (pixArray[((w*(y-1))+x)*4] === 0) ? true : false,
-        bottom : (pixArray[((w*(y+1))+x)*4] === 0) ? true : false
+
+      const sides = { // find connected pixels : but don't flag exterior
+        right : pixArray[((w*y)+(x+1))*4],
+        left : pixArray[((w*y)+(x-1))*4],
+        top : pixArray[((w*(y-1))+x)*4],
+        bottom : pixArray[((w*(y+1))+x)*4]
       }
-      if (val===0) savePixel(x,y,sides)
+      console.log(sides)
+        
+      // const sides = { // find connected pixels : but don't flag exterior
+      //   right : (pixArray[((w*y)+(x+1))*4] === 0) ? true : false,
+      //   left : (pixArray[((w*y)+(x-1))*4] === 0) ? true : false,
+      //   top : (pixArray[((w*(y-1))+x)*4] === 0) ? true : false,
+      //   bottom : (pixArray[((w*(y+1))+x)*4] === 0) ? true : false
+      // }
+     
+      // if (val===0) savePixel(x,y,sides)
     }
   }
+  return
 
   geo.scale(1,1,(3*printer.line)) 
   geo.center() 
@@ -166,5 +176,7 @@ function roundedRect( ctx, x, y, width, height, radius ) {
    ctx.lineTo( x + radius, y )
    ctx.quadraticCurveTo( x, y, x, y + radius )
 }  
+
+// const geometry = new THREE.ExtrudeGeometry(roundRectShape, {amount : 1})
 // roundedRectShape, 0, 0, 50, 50, 20
 
