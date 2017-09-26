@@ -1,10 +1,10 @@
-import yaml from 'yamljs'
-import imageToPlate from './imageToPlate.js'
-import exportStl from './exportStl.js'
-import floydDither from 'floyd-steinberg'
-import getPixels from 'get-pixels'
-import path from 'path'
-import proc from 'child_process'
+const yaml = require('yamljs')
+const imageToPlate = require('./imageToPlate.js')
+const exportStl = require('./exportStl.js')
+const floydDither = require('floyd-steinberg')
+const getPixels = require('get-pixels')
+const path = require('path')
+const proc = require('child_process')
 
 const conf = yaml.load(__dirname.replace('/dist','')+'/default.yml')
 

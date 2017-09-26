@@ -1,8 +1,8 @@
-import fs from 'fs'
-import THREE from 'three'
-import through from 'through2'
+const fs = require('fs')
+const THREE = require('three')
+const through = require('through2')
 
-export default function (opts, model, cb) {
+module.exports = function (opts, model, cb) {
   const s = through()
   const file = fs.createWriteStream(opts.file,'utf8')
   const vector = new THREE.Vector3()

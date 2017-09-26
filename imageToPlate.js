@@ -1,8 +1,8 @@
-import path from 'path'
-import _ from 'underscore'
-import THREE from 'three'
+const path = require('path')
+const _ = require('underscore')
+const THREE = require('three')
 
-export default function pixelsToGeometry (opts) {
+module.exports = function pixelsToGeometry (opts) {
   // 1 unit / pixel is === to 1 mm
   // units have to equal printer line width
   const conf = opts.conf

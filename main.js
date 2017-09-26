@@ -1,6 +1,6 @@
-import url from 'url'
-import path from 'path'
-import electron from 'electron'
+const url = require('url')
+const path = require('path')
+const electron = require('electron')
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
 
