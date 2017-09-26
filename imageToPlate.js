@@ -1,13 +1,10 @@
-import fs from 'fs'
 import path from 'path'
-import through from 'through2'
 import _ from 'underscore'
 import THREE from 'three'
 import exportStl from './exportStl.js'
 import floydDither from 'floyd-steinberg'
 import getPixels from 'get-pixels'
 import yaml from 'yamljs'
-
 
 const conf = yaml.load(__dirname.replace('/dist','')+'/default.yml')
 
@@ -23,17 +20,6 @@ const map = { // front : 8,9 & back : 10,11
   top : 4, // faces 4,5
   bottom : 6 // faces 6,7
 }
-
-
-function pixelBounds (bed) {
-  bed.width = bed.width - 20 // x margin
-  bed.height = bed.height - 20 // y margin
-  return {
-    w: parseInt(bed.width/bed.line), 
-    h: parseInt(bed.height/bed.line)
-  }
-}
-
 
 export default function (opts, output) {
   const geo = new THREE.Geometry()
