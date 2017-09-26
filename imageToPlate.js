@@ -22,36 +22,10 @@ const map = { // front : 8,9 & back : 10,11
 }
 
 export default function (opts, output) {
-  const geo = new THREE.Geometry()
-  const fileName = path.basename(opts.file)
-  const dirName = path.dirname(opts.file)
+  // output is a callback expecting an object {log:string,pixels:pixarray}
+  const ext = path.extname(opts.file) // file extension
+  const stlPath = opts.file.replace(ext, '.stl') 
 
-  processImage(opts, output)
-
-  // chain together functions passing results from one to another
-
-  // const prePix = sharp(opts.file) // check img dim and scale to fit printer
-  // prePix.metadata((e, info) => {
-  //   const bounds = pixelBounds(printer)
-  //   output({log:'processing '+opts.file})
-  //   if (info.height>bounds.h || info.width>bounds.w) {
-  //     opts.file = dirName+'/sm_'+fileName
-  //     if (info.width>info.height) prePix.resize(bounds.w, null)
-  //     else prePix.resize(null, bounds.w)
-  //     prePix.toFile(opts.file, (err) => {
-  //       if (err) console.error(e)
-  //       processImage(opts, output)
-  //     })
-  //   } else processImage(opts, output) 
-  // })
-}
-
-
-function processImage (opts, output) {
-  let color = false
-  const ext = path.extname(opts.file)
-  const bwPath = opts.file.replace(ext, '_bw' + ext)
-  const stlPath = opts.file.replace('sm_','').replace(ext, '.stl')
   getPixels(opts.file, (e, pixels) => { 
     const w = pixels.shape[0]
     const h = pixels.shape[1]
@@ -59,15 +33,9 @@ function processImage (opts, output) {
       width : w, height: h, data: pixels.data, stlFileName: stlPath
     }
 
-    for(let x = 0; x < w; x++) { // clumsy check first row for bw
-      const val = pixels.data[((w*0)+x)*4]
-      if (val !== 0 || val !== 255) { color = true; break }
-    }
-
-    if (color) {
-      pixels.data = floydDither(pixels).data
-      packagedPixels.data = pixels.data
-    }
+    // dither image!
+    pixels.data = floydDither(pixels).data
+    packagedPixels.data = pixels.data
 
     output({preview:pixels})
     output({log:'|･ω･)ﾉ making 3D plate from image pixels...'})
@@ -81,6 +49,7 @@ function processImage (opts, output) {
 function pixelsToGeometry (opts, output, geo) {
   // 1 unit / pixel is === to 1 mm
   // units have to equal printer line width
+  const geo = new THREE.Geometry()
   const w = opts.width
   const h = opts.height
   const baseWidth = (w*conf.printer.line) + conf.plate.basePadding
@@ -107,7 +76,7 @@ function pixelsToGeometry (opts, output, geo) {
       //   bottom : (pixArray[((w*(y+1))+x)*4] === 0) ? true : false
       // }
      
-      // if (val===0) savePixel(x,y,sides)
+      // if (val===0) makePixel(x,y,sides)
     }
   }
 
@@ -138,7 +107,7 @@ function pixelsToGeometry (opts, output, geo) {
 }
 
 
-function savePixel (x,y,sides,geo) {
+function makePixel (x,y,sides,geo) {
   const pixel = new THREE.Mesh(pixelGeo.clone())
   let m = _.clone(map)
 
@@ -156,7 +125,6 @@ function savePixel (x,y,sides,geo) {
   geo.merge(pixel.geometry,pixel.matrix)
 }
 
-// var roundedRectShape = new THREE.Shape();
 function roundedRect( ctx, x, y, width, height, radius ) {
    ctx.moveTo( x, y + radius )
    ctx.lineTo( x, y + height - radius )
@@ -168,7 +136,3 @@ function roundedRect( ctx, x, y, width, height, radius ) {
    ctx.lineTo( x + radius, y )
    ctx.quadraticCurveTo( x, y, x, y + radius )
 }  
-
-// const geometry = new THREE.ExtrudeGeometry(roundRectShape, {amount : 1})
-// roundedRectShape, 0, 0, 50, 50, 20
-
