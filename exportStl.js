@@ -3,6 +3,7 @@ const THREE = require('three')
 const through = require('through2')
 
 module.exports = function (opts, model, cb) {
+  // add binary/ascii option?
   const s = through()
   const file = fs.createWriteStream(opts.file,'utf8')
   const vector = new THREE.Vector3()
@@ -13,7 +14,7 @@ module.exports = function (opts, model, cb) {
   s.write('solid\n')
 
   file.on('error', (e) => { cb(e,null) })
-  file.on('close', () => { cb(null, true)
+  file.on('close', () => { cb(null, true) })
 
   if (model instanceof THREE.Mesh) {
     const geometry = model.geometry
@@ -45,7 +46,7 @@ module.exports = function (opts, model, cb) {
       s.end('endsolid')
     } 
   } else {
-    cb(new Error(message:'Input should be a THREE.js mesh'), null)
+    // cb(new Error('Input should be a THREE.js mesh'), null)
     return
   }
 }

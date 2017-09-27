@@ -8,5 +8,5 @@ printer: # Default is for Tinkerine Ditto Pro
 plate:
   pixelHeight: 2
   basePadding: 4
-  baseBevel: 4
+  baseBevel: 6
   baseHeight: 1
